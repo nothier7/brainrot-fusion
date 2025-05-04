@@ -26,6 +26,17 @@ export default function CharacterGeneratorPage() {
     setNameEnd(data.nameEnd || '');
   };
 
+  const handleBuyCredits = async () => {
+    const res = await fetch('/api/checkout', { method: 'POST' });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Failed to start checkout session.");
+    }
+  };
+  
+
   const generateCharacter = async () => {
 
     const fullName = `${nameStart} ${nameEnd}`;
@@ -111,6 +122,15 @@ export default function CharacterGeneratorPage() {
             className="mt-4 w-full max-w-md rounded shadow-lg"
         />
         )}
+
+            <button
+            onClick={handleBuyCredits}
+            className="mt-4 bg-yellow-600 hover:bg-yellow-400 text-white px-4 py-2 rounded"
+        >
+            💳 Buy More Image Credits
+        </button>
+
+
 
 
 
