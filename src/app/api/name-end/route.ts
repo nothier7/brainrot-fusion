@@ -35,7 +35,7 @@ export async function GET() {
 
     const nameEnd = chat.choices[0].message.content?.trim();
     return NextResponse.json({ nameEnd });
-  } catch (err: any) {
+  } catch  {
     return NextResponse.json({ error: 'Failed to generate name end' }, { status: 500 });
   }
 }

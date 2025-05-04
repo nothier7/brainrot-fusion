@@ -45,7 +45,7 @@ Return valid JSON with:
       description: parsed.description,
       quote: parsed.quote,
     });
-  } catch (err: any) {
+  } catch  {
     console.error('❌ Character generation failed:', err);
     return NextResponse.json({ error: 'Character generation failed' }, { status: 500 });
   }
