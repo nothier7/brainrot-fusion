@@ -47,14 +47,9 @@ export async function POST(req: Request) {
     const fusedName = completion.choices[0].message.content?.trim();
 
     const imagePrompt = `
-    I want you to generate me an image of a new character if these two people had a baby or fused together:
-    - ${charA}: ${imageUrlA}
-    - ${charB}: ${imageUrlB}
-    
-    Make the character have some visible features of both parents — like hairstyle, expression, colors, or face shape. 
-    Give the character a dramatic or exaggerated style like an Italian movie character. 
-    Add a background as if they were in a story scene — no blank background.
-    The result should feel like a cartoon or cinematic fusion of both.
+    I want you to generate me A 3D-rendered anthropomorphic wooden club character with a smooth cylindrical body, carved wood texture, big glossy cartoon eyes, a wide smile, and long wooden limbs.
+    It stands barefoot on a dimly lit street in a Southeast Asian village at night, holding a wooden baseball bat. Warm yellow light from streetlamps casts cinematic shadows. 
+    The background includes a wooden bench and a building with a “PENTUNGAN POS RONDO” sign, creating a slightly eerie, meme-like tone in hyper-realistic CGI style..
     `;
 
     const imageResponse = await openai.images.generate({
