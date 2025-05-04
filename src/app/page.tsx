@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import FusionForm from '../components/FusionForm';
 
 export default function Home() {
