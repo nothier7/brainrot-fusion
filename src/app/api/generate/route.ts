@@ -18,6 +18,7 @@ Based on the name "${fullName}", describe a utopic character as if it's a creatu
 Describe only its **physical appearance** and expression. 
 Do NOT describe backstory, personality, or powers.
 The character description should ONLY be based on the name "${fullName}".
+Avoid adding rainbow wings, unicorns, or anything that could be considered a cliche fantasy element.
 
 Make it absurd. Think "a ninja capuccino cup with swords" if the name was "Capuccino assassino" or "a half banana hald chimpanzi creature" if the name was "Chimpanzin bananini". Keep it fun and visual.
 

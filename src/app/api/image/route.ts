@@ -15,7 +15,8 @@ export async function POST(req: Request) {
   try {
     const response = await openai.images.generate({
       model: 'dall-e-3',
-      prompt: `Draw a 3D character based on this description: ${prompt}. Add a realistic background putting the character in a an indoor or outdoor scene not just a plain background.`,
+      prompt: `Draw a 3D character based on this description: ${prompt}.
+      Add a realistic background putting the character in a an indoor or outdoor scene not just a plain background.`,
       n: 1,
       size: '1024x1024',
     });
