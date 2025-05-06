@@ -108,11 +108,13 @@ export default function CharacterGeneratorPage() {
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
       <h1 className="text-3xl font-bold">🧠 Brainrot Character Generator 🧠</h1>
 
-      {credits !== null && (
-        <p className="text-sm text-gray-400">
-          🪙 Image Credits: {credits}
-        </p>
+      {user && (
+        <div className="bg-white text-gray-700 p-3 rounded shadow mb-4 w-full text-left">
+          <p><strong>Email:</strong> {user.email}</p>
+          <p><strong>Credits:</strong> {credits !== null ? credits : 'Loading...'}</p>
+        </div>
       )}
+
 
       <pre className="text-xs text-gray-500">
         {JSON.stringify({ user, credits }, null, 2)}
