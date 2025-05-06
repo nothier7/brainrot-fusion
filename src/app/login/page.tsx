@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import { supabase } from '@/utils/supabaseClient';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const handleLogin = async () => {

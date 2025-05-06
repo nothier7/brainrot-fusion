@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { supabase } from '@/utils/supabaseClient';
+import { User } from '@supabase/supabase-js'; // add this at the top
+
 
 
 export default function CharacterGeneratorPage() {
@@ -15,7 +17,7 @@ export default function CharacterGeneratorPage() {
   const [imageUrl, setImageUrl] = useState('');
   const [loadingImage, setLoadingImage] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
 
 
 
