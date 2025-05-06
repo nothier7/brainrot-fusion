@@ -4,19 +4,21 @@ export const dynamic = 'force-dynamic';
 
 import { useState } from 'react';
 import { supabase } from '@/utils/supabaseClient';
-import { useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const searchParams = useSearchParams();
+  const redirectTo = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
+
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (!error) {
       setSubmitted(true);
-      const redirectTo = searchParams.get('redirect') || '/character-generator';
+      const redirectTo = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') || '/character-generator' : '/character-generator';
+                         localStorage.setItem('postLoginRedirect', redirectTo);
+
       localStorage.setItem('postLoginRedirect', redirectTo);
     }
   };
