@@ -9,13 +9,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const redirectTo = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
-
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithOtp({ email });
+
     if (!error) {
       setSubmitted(true);
+
+      
       const redirectTo = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') || '/character-generator' : '/character-generator';
                          localStorage.setItem('postLoginRedirect', redirectTo);
 
