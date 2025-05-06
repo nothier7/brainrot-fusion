@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useEffect } from 'react';
+import { supabase } from '@/utils/supabaseClient';
+
 
 export default function CharacterGeneratorPage() {
   const [nameStart, setNameStart] = useState('');
@@ -11,9 +14,43 @@ export default function CharacterGeneratorPage() {
   const [generated, setGenerated] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [loadingImage, setLoadingImage] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [user, setUser] = useState<any>(null);
 
 
 
+
+  useEffect(() => {
+    const fetchOrCreateProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log("⚠️ No user found");
+        return;
+      }
+      setUser(user);
+  
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+  
+      if (!data && !error) {
+        await supabase.from('profiles').insert({
+          id: user.id,
+          email: user.email,
+          credits: 3,
+        });
+        setCredits(3);
+      } else if (data) {
+        setCredits(data.credits);
+      }
+    };
+  
+    fetchOrCreateProfile();
+  }, []);
+  
+  
   const generateNameStart = async () => {
     const res = await fetch('/api/name-start');
     const data = await res.json();
@@ -26,7 +63,15 @@ export default function CharacterGeneratorPage() {
     setNameEnd(data.nameEnd || '');
   };
 
+
   const handleBuyCredits = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+  
+    if (!user) {
+      window.location.href = '/login?redirect=/character-generator';
+      return;
+    }
+  
     const res = await fetch('/api/checkout', { method: 'POST' });
     const data = await res.json();
     if (data.url) {
@@ -36,7 +81,7 @@ export default function CharacterGeneratorPage() {
     }
   };
   
-
+  
   const generateCharacter = async () => {
 
     const fullName = `${nameStart} ${nameEnd}`;
@@ -58,6 +103,17 @@ export default function CharacterGeneratorPage() {
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
       <h1 className="text-3xl font-bold">🧠 Brainrot Character Generator 🧠</h1>
+
+      {credits !== null && (
+        <p className="text-sm text-gray-400">
+          🪙 Image Credits: {credits}
+        </p>
+      )}
+
+      <pre className="text-xs text-gray-500">
+        {JSON.stringify({ user, credits }, null, 2)}
+      </pre>
+
 
       <div className="flex gap-2">
         <button 
@@ -99,16 +155,34 @@ export default function CharacterGeneratorPage() {
         {generated && !imageUrl && (
         <button
             onClick={async () => {
-            setLoadingImage(true);
-            const res = await fetch('/api/image', {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (!user || credits === null) return;
+
+              if (credits <= 0) {
+                alert("❌ You're out of image credits.");
+                return;
+              }
+
+              setLoadingImage(true);
+
+              const res = await fetch('/api/image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: description || quote }),
-            });
-            const data = await res.json();
-            setImageUrl(data.imageUrl);
-            setLoadingImage(false);
+              });
+
+              const data = await res.json();
+              setImageUrl(data.imageUrl);
+              setLoadingImage(false);
+
+              // 🧮 Deduct 1 credit from Supabase
+              await supabase
+                .from('profiles')
+                .update({ credits: credits - 1 })
+                .eq('id', user.id);
+              setCredits(credits - 1);
             }}
+
             className="mt-2 bg-purple-600 text-white px-4 py-2 rounded"
         >
             {loadingImage ? 'Generating Image...' : '🖼 Generate Character Image'}
