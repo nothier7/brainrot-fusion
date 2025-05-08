@@ -114,7 +114,7 @@ export default function CharacterGeneratorPage() {
             setQuote('');
             setGenerated(false);
             setImageUrl('');
-            handleLogout;
+            handleLogout();
           }} className="underline text-red-300 hover:text-red-100">Logout</button>
           </div>
         ) : (
