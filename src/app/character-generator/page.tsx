@@ -14,7 +14,7 @@ export default function CharacterGeneratorPage() {
   const [nameEnd, setNameEnd] = useState('');
   const [description, setDescription] = useState('');
   const [quote, setQuote] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [generated, setGenerated] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [loadingImage, setLoadingImage] = useState(false);
