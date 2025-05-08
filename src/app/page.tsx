@@ -1,10 +1,14 @@
-import FusionForm from '../components/FusionForm';
+// app/page.tsx
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
-      <h1 className="text-3xl font-bold">🧠 Brainrot Fusion</h1>
-      <FusionForm />
-    </main>
-  );
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/character-generator');
+  }, [router]);
+
+  return null;
 }
