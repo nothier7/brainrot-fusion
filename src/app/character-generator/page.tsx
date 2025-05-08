@@ -99,23 +99,7 @@ export default function CharacterGeneratorPage() {
   };
   
   
-  const generateCharacter = async () => {
 
-    const fullName = `${nameStart} ${nameEnd}`;
-    setLoading(true);
-
-    const res = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fullName }),
-    });
-
-    const data = await res.json();
-    setDescription(data.description || '');
-    setQuote(data.quote || '');
-    setLoading(false);
-    setGenerated(true);
-  };
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
