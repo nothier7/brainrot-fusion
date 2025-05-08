@@ -17,9 +17,10 @@ export default function CharacterGeneratorPage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchOrCreateProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
       setUser(user);
 
       const { data, error } = await supabase
@@ -40,7 +41,7 @@ export default function CharacterGeneratorPage() {
       }
     };
 
-    fetchUser();
+    fetchOrCreateProfile();
   }, []);
 
   const generateNameStart = async () => {
@@ -86,32 +87,39 @@ export default function CharacterGeneratorPage() {
       window.location.href = '/login?redirect=/character-generator';
       return;
     }
-
     const res = await fetch('/api/checkout', { method: 'POST' });
     const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      alert("Failed to start checkout session.");
-    }
+    if (data.url) window.location.href = data.url;
+    else alert("Failed to start checkout session.");
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setCredits(null);
   };
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
-      <h1 className="text-3xl font-bold">🧠 Brainrot Character Generator 🧠</h1>
+      {/* Top banner */}
+      <div className="w-full bg-gray-800 text-white p-3 rounded shadow flex justify-between items-center text-sm">
+        {user ? (
+          <div className="flex flex-wrap gap-2 items-center">
+            <span>👤 {user.email}</span>
+            <span>🪙 {credits ?? 0} Credits</span>
+            <button onClick={handleLogout} className="underline text-red-300 hover:text-red-100">Logout</button>
+          </div>
+        ) : (
+          <button
+            onClick={() => window.location.href = '/login?redirect=/character-generator'}
+            className="text-sm bg-yellow-500 hover:bg-yellow-400 text-white px-3 py-1 rounded"
+          >
+            🔐 Log in
+          </button>
+        )}
+      </div>
 
-      {!user && (
-        <div className="text-sm text-yellow-700 bg-yellow-100 px-3 py-2 rounded shadow">
-          ⚠️ You have 1 free image generation. Log in to unlock more!
-        </div>
-      )}
-
-      {user && (
-        <div className="bg-white text-gray-700 p-3 rounded shadow mb-4 w-full text-left">
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Credits:</strong> {credits !== null ? credits : 'Loading...'}</p>
-        </div>
-      )}
+      <h1 className="text-3xl font-bold mt-2">🧠 Brainrot Character Generator 🧠</h1>
 
       <div className="flex gap-2">
         <button
@@ -120,7 +128,6 @@ export default function CharacterGeneratorPage() {
         >
           Generate First Part
         </button>
-
         <button
           onClick={generateNameEnd}
           className="bg-green-600 hover:bg-green-400 text-white px-4 py-2 rounded"
@@ -144,7 +151,7 @@ export default function CharacterGeneratorPage() {
 
       {generated && (
         <div className="mt-6 bg-gray-100 text-black p-4 rounded shadow w-full">
-          <h2 className="text-xl font-bold mb-2">{nameStart} {nameEnd}</h2>
+          <h2 className="text-xl text-black font-bold mb-2">{nameStart} {nameEnd}</h2>
           <p><strong>Appearance:</strong> {description}</p>
           <p className="italic mt-2">“{quote}”</p>
         </div>
@@ -156,14 +163,14 @@ export default function CharacterGeneratorPage() {
             const { data: { user: currentUser } } = await supabase.auth.getUser();
 
             if (!description && !quote) {
-              alert("❌ Cannot generate image: character description or quote is missing.");
+              alert("❌ Cannot generate image: description/quote missing.");
               return;
             }
 
             if (!currentUser) {
               const used = getAnonymousUsage();
               if (used >= 1) {
-                alert("🛑 You’ve used your free image. Log in to get more credits.");
+                alert("🛑 Free image used. Log in to get more credits.");
                 window.location.href = '/login?redirect=/character-generator';
                 return;
               } else {
@@ -181,7 +188,7 @@ export default function CharacterGeneratorPage() {
             const res = await fetch('/api/image', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: description || quote }),
+              body: JSON.stringify({ prompt: description }),
             });
 
             const data = await res.json();
