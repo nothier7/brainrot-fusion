@@ -1,20 +1,34 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/utils/supabaseClient';
 
 export default function SuccessPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const current = parseInt(localStorage.getItem('imageCredits') || '0');
-    localStorage.setItem('imageCredits', (current + 10).toString());
+    const applyCredits = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // ✅ Update credits in Supabase for logged-in user
+        await supabase
+          .from('profiles')
+          .update({ credits: 10 }) // or increment if needed
+          .eq('id', user.id);
+      } else {
+        // ✅ Handle anonymous user
+        const current = parseInt(localStorage.getItem('imageCredits') || '0');
+        localStorage.setItem('imageCredits', (current + 10).toString());
+      }
 
-    const timer = setTimeout(() => {
-      router.push('/character-generator');
-    }, 3000);
+      setTimeout(() => {
+        router.push('/character-generator');
+      }, 3000);
+    };
 
-    return () => clearTimeout(timer);
+    applyCredits();
   }, [router]);
 
   return (
