@@ -107,7 +107,15 @@ export default function CharacterGeneratorPage() {
           <div className="flex flex-wrap gap-2 items-center">
             <span>👤 {user.email}</span>
             <span>🪙 {credits ?? 0} Credits</span>
-            <button onClick={handleLogout} className="underline text-red-300 hover:text-red-100">Logout</button>
+            <button onClick={() => {
+            setNameStart('');
+            setNameEnd('');
+            setDescription('');
+            setQuote('');
+            setGenerated(false);
+            setImageUrl('');
+            handleLogout;
+          }} className="underline text-red-300 hover:text-red-100">Logout</button>
           </div>
         ) : (
           <button
