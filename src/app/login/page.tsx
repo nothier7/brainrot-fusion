@@ -1,7 +1,6 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-
 import { useState } from 'react';
 import { supabase } from '@/utils/supabaseClient';
 
@@ -9,17 +8,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    const redirectTo =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/character-generator`
+        : '/character-generator';
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectTo, // ✅ Explicit redirect for magic link
+      },
+    });
 
     if (!error) {
       setSubmitted(true);
-
-      
-      const redirectTo = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') || '/character-generator' : '/character-generator';
-                         localStorage.setItem('postLoginRedirect', redirectTo);
-
       localStorage.setItem('postLoginRedirect', redirectTo);
     }
   };
