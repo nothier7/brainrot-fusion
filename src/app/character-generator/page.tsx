@@ -68,6 +68,19 @@ export default function CharacterGeneratorPage() {
   };
 
 
+  const getAnonymousUsage = () => {
+    if (typeof window === 'undefined') return 0;
+    return parseInt(localStorage.getItem('anonImageUses') || '0', 10);
+  };
+  
+  const incrementAnonymousUsage = () => {
+    const used = getAnonymousUsage() + 1;
+    localStorage.setItem('anonImageUses', used.toString());
+    return used;
+  };
+  
+
+
   const handleBuyCredits = async () => {
     const { data: { user } } = await supabase.auth.getUser();
   
@@ -107,6 +120,12 @@ export default function CharacterGeneratorPage() {
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
       <h1 className="text-3xl font-bold">🧠 Brainrot Character Generator 🧠</h1>
+      {!user && (
+        <div className="text-sm text-yellow-700 bg-yellow-100 px-3 py-2 rounded shadow">
+          ⚠️ You have 1 free image generation. Log in to unlock more!
+        </div>
+      )}
+
 
       {user && (
         <div className="bg-white text-gray-700 p-3 rounded shadow mb-4 w-full text-left">
@@ -143,57 +162,52 @@ export default function CharacterGeneratorPage() {
       </div>
 
       <button
-        onClick={generateCharacter}
-        disabled={!nameStart || !nameEnd || loading || generated}
-        className="bg-blue-600 hover:bg-blue-400 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {loading ? 'Generating...' : 'Generate Character'}
-      </button>
-
-      {description && quote && (
-        <div className="mt-6 bg-gray-100  text-black p-4 rounded shadow w-full">
-            <h2 className="text-xl text-black font-bold mb-2">{nameStart} {nameEnd}</h2>
-            <p className='text-black'><strong>Appearance:</strong> {description}</p>
-            <p className=" text-black italic mt-2">“{quote}”</p>
-        </div>
-        )}
-
-        {generated && !imageUrl && (
-        <button
-            onClick={async () => {
-              const { data: { user } } = await supabase.auth.getUser();
-              if (!user || credits === null) return;
-
-              if (credits <= 0) {
-                alert("❌ You're out of image credits.");
-                return;
-              }
-
-              setLoadingImage(true);
-
-              const res = await fetch('/api/image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: description || quote }),
-              });
-
-              const data = await res.json();
-              setImageUrl(data.imageUrl);
-              setLoadingImage(false);
-
-              // 🧮 Deduct 1 credit from Supabase
-              await supabase
-                .from('profiles')
-                .update({ credits: credits - 1 })
-                .eq('id', user.id);
-              setCredits(credits - 1);
-            }}
-
+        onClick={async () => {
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+          // Anonymous user logic
+          if (!currentUser) {
+            const used = getAnonymousUsage();
+            if (used >= 1) {
+              alert("🛑 You’ve used your free image. Log in to get more credits.");
+              window.location.href = '/login?redirect=/character-generator';
+              return;
+            } else {
+              incrementAnonymousUsage();
+            }
+          }
+        
+          // Logged-in + credit check
+          if (currentUser && credits !== null && credits <= 0) {
+            alert("❌ You're out of image credits.");
+            return;
+          }
+        
+          setLoadingImage(true);
+        
+          const res = await fetch('/api/image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: description || quote }),
+          });
+        
+          const data = await res.json();
+          setImageUrl(data.imageUrl);
+          setLoadingImage(false);
+        
+          // Deduct credit if logged in
+          if (currentUser && credits !== null) {
+            await supabase
+              .from('profiles')
+              .update({ credits: credits - 1 })
+              .eq('id', currentUser.id);
+            setCredits(credits - 1);
+          }
+        }}
             className="mt-2 bg-purple-600 text-white px-4 py-2 rounded"
         >
             {loadingImage ? 'Generating Image...' : '🖼 Generate Character Image'}
         </button>
-        )}
 
         {imageUrl && (
         <img
