@@ -159,50 +159,63 @@ export default function CharacterGeneratorPage() {
 
       {generated && description && (
         <button
-          onClick={async () => {
-            const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-            if (!description && !quote) {
-              alert("❌ Cannot generate image: description/quote missing.");
+        onClick={async () => {
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+          if (!description && !quote) {
+            alert("❌ Cannot generate image: character description or quote is missing.");
+            return;
+          }
+        
+          if (!currentUser) {
+            const used = getAnonymousUsage();
+            if (used >= 1) {
+              alert("🛑 You’ve used your free image. Log in to get more credits.");
+              window.location.href = '/login?redirect=/character-generator';
               return;
+            } else {
+              incrementAnonymousUsage();
             }
-
-            if (!currentUser) {
-              const used = getAnonymousUsage();
-              if (used >= 1) {
-                alert("🛑 Free image used. Log in to get more credits.");
-                window.location.href = '/login?redirect=/character-generator';
-                return;
-              } else {
-                incrementAnonymousUsage();
-              }
-            }
-
-            if (currentUser && credits !== null && credits <= 0) {
+          }
+        
+          if (currentUser) {
+            // 🔄 Always fetch latest credits from Supabase
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('credits')
+              .eq('id', currentUser.id)
+              .single();
+        
+            const latestCredits = profile?.credits ?? 0;
+        
+            if (latestCredits <= 0) {
               alert("❌ You're out of image credits.");
               return;
             }
-
-            setLoadingImage(true);
-
-            const res = await fetch('/api/image', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: description }),
-            });
-
-            const data = await res.json();
-            setImageUrl(data.imageUrl);
-            setLoadingImage(false);
-
-            if (currentUser && credits !== null) {
-              await supabase
-                .from('profiles')
-                .update({ credits: credits - 1 })
-                .eq('id', currentUser.id);
-              setCredits(credits - 1);
-            }
-          }}
+        
+            setCredits(latestCredits); // ensure local state stays synced
+          }
+        
+          setLoadingImage(true);
+        
+          const res = await fetch('/api/image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: description || quote }),
+          });
+        
+          const data = await res.json();
+          setImageUrl(data.imageUrl);
+          setLoadingImage(false);
+        
+          if (currentUser && credits !== null) {
+            await supabase
+              .from('profiles')
+              .update({ credits: credits - 1 })
+              .eq('id', currentUser.id);
+            setCredits(credits - 1);
+          }
+        }}        
           className="mt-2 bg-purple-600 text-white px-4 py-2 rounded"
         >
           {loadingImage ? 'Generating Image...' : '🖼 Generate Character Image'}
