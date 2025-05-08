@@ -17,7 +17,7 @@ export default function CharacterGeneratorPage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchOrCreateProfile = async () => {
+    const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUser(user);
@@ -40,7 +40,7 @@ export default function CharacterGeneratorPage() {
       }
     };
 
-    fetchOrCreateProfile();
+    fetchUser();
   }, []);
 
   const generateNameStart = async () => {
@@ -144,7 +144,7 @@ export default function CharacterGeneratorPage() {
 
       {generated && (
         <div className="mt-6 bg-gray-100 text-black p-4 rounded shadow w-full">
-          <h2 className="text-xl text-black font-bold mb-2">{nameStart} {nameEnd}</h2>
+          <h2 className="text-xl font-bold mb-2">{nameStart} {nameEnd}</h2>
           <p><strong>Appearance:</strong> {description}</p>
           <p className="italic mt-2">“{quote}”</p>
         </div>
