@@ -86,15 +86,20 @@ export default function CharacterGeneratorPage() {
     return used;
   };
 
-  const handleBuyCredits = async () => {
-    if (!user) {
-      window.location.href = '/login?redirect=/character-generator';
-      return;
-    }
-    const res = await fetch('/api/checkout', { method: 'POST' });
+  const handleBuyCredits = async (tier: 'starter' | 'popular' | 'pro') => {
+    const res = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier }),
+    });
     const data = await res.json();
-    if (data.url) window.location.href = data.url;
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert('Failed to start checkout session.');
+    }
   };
+  
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -213,12 +218,35 @@ export default function CharacterGeneratorPage() {
         <img src={imageUrl} alt="Generated character" className="mt-4 w-full max-w-md rounded shadow-lg" />
       )}
 
-      <button
-        onClick={handleBuyCredits}
-        className="mt-4 bg-yellow-600 hover:bg-yellow-400 text-white px-4 py-2 rounded"
-      >
-        💳 Buy More Image Credits
-      </button>
+<div className="mt-6 w-full text-center space-y-2">
+  <h3 className="text-lg font-semibold">Buy More Credits</h3>
+  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <button
+      onClick={() => handleBuyCredits('starter')}
+      className="bg-yellow-500 hover:bg-yellow-400 text-white px-4 py-3 rounded shadow"
+    >
+      🎯 Starter <br />
+      <span className="text-sm">$4.99 for 15 credits</span>
+    </button>
+
+    <button
+      onClick={() => handleBuyCredits('popular')}
+      className="bg-green-600 hover:bg-green-500 text-white px-4 py-3 rounded shadow"
+    >
+      🔥 Popular <br />
+      <span className="text-sm">$9.99 for 35 credits</span>
+    </button>
+
+    <button
+      onClick={() => handleBuyCredits('pro')}
+      className="bg-purple-700 hover:bg-purple-600 text-white px-4 py-3 rounded shadow"
+    >
+      🚀 Pro <br />
+      <span className="text-sm">$19.99 for 80 credits</span>
+    </button>
+  </div>
+</div>
+
 
       {generated && (
         <button
