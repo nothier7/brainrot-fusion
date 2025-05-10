@@ -27,14 +27,25 @@ export default function CharacterGeneratorPage() {
   useEffect(() => {
     const updateCredits = async () => {
       if (!user) return;
-      const { data } = await supabase
+    
+      const { data, error } = await supabase
         .from('profiles')
         .select('credits')
         .eq('id', user.id)
         .single();
-
-      if (data) setCredits(data.credits);
-    };
+    
+      if (error || !data) {
+        // If profile doesn't exist, insert it
+        await supabase.from('profiles').insert({
+          id: user.id,
+          email: user.email,
+          credits: 3,
+        });
+        setCredits(3);
+      } else {
+        setCredits(data.credits);
+      }
+    };    
     updateCredits();
   }, [user]);
 
