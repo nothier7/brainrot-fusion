@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabaseClient';
 import { User } from '@supabase/supabase-js';
 
@@ -17,43 +17,26 @@ export default function CharacterGeneratorPage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchOrCreateProfile = async () => {
+    const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUser(user);
+      if (user) setUser(user);
+    };
+    fetchUser();
+  }, []);
 
-      const { data, error } = await supabase
+  useEffect(() => {
+    const updateCredits = async () => {
+      if (!user) return;
+      const { data } = await supabase
         .from('profiles')
-        .select('*')
+        .select('credits')
         .eq('id', user.id)
         .single();
 
-      if (!data && !error) {
-        await supabase.from('profiles').insert({
-          id: user.id,
-          email: user.email,
-          credits: 3,
-        });
-        setCredits(3);
-      } else if (data) {
-        setCredits(data.credits);
-      }
+      if (data) setCredits(data.credits);
     };
-
-    fetchOrCreateProfile();
-
-    // Refresh credits when tab becomes visible
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        fetchOrCreateProfile();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, []);
+    updateCredits();
+  }, [user]);
 
   const generateNameStart = async () => {
     const res = await fetch('/api/name-start');
@@ -93,37 +76,43 @@ export default function CharacterGeneratorPage() {
   };
 
   const handleBuyCredits = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = '/login?redirect=/character-generator';
       return;
     }
-
     const res = await fetch('/api/checkout', { method: 'POST' });
     const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      alert("Failed to start checkout session.");
-    }
+    if (data.url) window.location.href = data.url;
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
   };
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
       <h1 className="text-3xl font-bold">🧠 Brainrot Character Generator 🧠</h1>
 
-      {!user && (
-        <div className="text-sm text-yellow-700 bg-yellow-100 px-3 py-2 rounded shadow">
-          ⚠️ You have 1 free image generation. Log in to unlock more!
-        </div>
-      )}
-
-      {user && (
-        <div className="bg-white text-gray-700 p-3 rounded shadow mb-4 w-full text-left">
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Credits:</strong> {credits !== null ? credits : 'Loading...'}</p>
-        </div>
-      )}
+      <div className="w-full">
+        {user ? (
+          <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded flex justify-between items-center text-sm">
+            <div>
+              <strong>{user.email}</strong> — 🪙 {credits ?? '...'} credits
+            </div>
+            <button onClick={handleLogout} className="text-blue-600 hover:underline text-xs ml-2">
+              Logout
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => (window.location.href = '/login?redirect=/character-generator')}
+            className="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Login to track credits
+          </button>
+        )}
+      </div>
 
       <div className="flex gap-2">
         <button
@@ -132,7 +121,6 @@ export default function CharacterGeneratorPage() {
         >
           Generate First Part
         </button>
-
         <button
           onClick={generateNameEnd}
           className="bg-green-600 hover:bg-green-400 text-white px-4 py-2 rounded"
@@ -156,7 +144,7 @@ export default function CharacterGeneratorPage() {
 
       {generated && (
         <div className="mt-6 bg-gray-100 text-black p-4 rounded shadow w-full">
-          <h2 className="text-xl text-black font-bold mb-2">{nameStart} {nameEnd}</h2>
+          <h2 className="text-xl font-bold mb-2">{nameStart} {nameEnd}</h2>
           <p><strong>Appearance:</strong> {description}</p>
           <p className="italic mt-2">“{quote}”</p>
         </div>
@@ -168,7 +156,7 @@ export default function CharacterGeneratorPage() {
             const { data: { user: currentUser } } = await supabase.auth.getUser();
 
             if (!description && !quote) {
-              alert("❌ Cannot generate image: character description or quote is missing.");
+              alert("❌ Missing character info.");
               return;
             }
 
@@ -189,22 +177,17 @@ export default function CharacterGeneratorPage() {
             }
 
             setLoadingImage(true);
-
             const res = await fetch('/api/image', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ prompt: description || quote }),
+              body: JSON.stringify({ prompt: description }),
             });
-
             const data = await res.json();
             setImageUrl(data.imageUrl);
             setLoadingImage(false);
 
             if (currentUser && credits !== null) {
-              await supabase
-                .from('profiles')
-                .update({ credits: credits - 1 })
-                .eq('id', currentUser.id);
+              await supabase.from('profiles').update({ credits: credits - 1 }).eq('id', currentUser.id);
               setCredits(credits - 1);
             }
           }}
@@ -215,11 +198,7 @@ export default function CharacterGeneratorPage() {
       )}
 
       {imageUrl && (
-        <img
-          src={imageUrl}
-          alt="Generated character"
-          className="mt-4 w-full max-w-md rounded shadow-lg"
-        />
+        <img src={imageUrl} alt="Generated character" className="mt-4 w-full max-w-md rounded shadow-lg" />
       )}
 
       <button
