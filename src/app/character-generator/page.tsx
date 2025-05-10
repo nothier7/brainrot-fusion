@@ -39,9 +39,9 @@ export default function CharacterGeneratorPage() {
         await supabase.from('profiles').insert({
           id: user.id,
           email: user.email,
-          credits: 3,
+          credits: 2,
         });
-        setCredits(3);
+        setCredits(2);
       } else {
         setCredits(data.credits);
       }
