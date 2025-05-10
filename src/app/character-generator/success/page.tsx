@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabaseClient';
 
 export default function SuccessPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
 
   // Define how many credits each tier gives
@@ -21,7 +20,10 @@ export default function SuccessPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const tier = searchParams.get('tier') || 'starter';
+      const tier =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('tier') || 'starter'
+          : 'starter';
       const creditsToAdd = TIER_CREDITS[tier] || 15;
 
       const { data, error } = await supabase
@@ -45,7 +47,7 @@ export default function SuccessPage() {
     };
 
     updateCredits();
-  }, [router, searchParams]);
+  }, [router]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen text-center">
