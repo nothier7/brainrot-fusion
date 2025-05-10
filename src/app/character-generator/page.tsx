@@ -20,7 +20,6 @@ export default function CharacterGeneratorPage() {
     const fetchOrCreateProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
       setUser(user);
 
       const { data, error } = await supabase
@@ -42,6 +41,18 @@ export default function CharacterGeneratorPage() {
     };
 
     fetchOrCreateProfile();
+
+    // Refresh credits when tab becomes visible
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOrCreateProfile();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   const generateNameStart = async () => {
@@ -87,47 +98,32 @@ export default function CharacterGeneratorPage() {
       window.location.href = '/login?redirect=/character-generator';
       return;
     }
+
     const res = await fetch('/api/checkout', { method: 'POST' });
     const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else alert("Failed to start checkout session.");
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setCredits(null);
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Failed to start checkout session.");
+    }
   };
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
-      {/* Top banner */}
-      <div className="w-full bg-gray-800 text-white p-3 rounded shadow flex justify-between items-center  text-center text-sm">
-        {user ? (
-          <div className="flex flex-wrap gap-2  text-center items-center">
-            <span>👤 {user.email}</span>
-            <span>🪙 {credits ?? 0} Credits</span>
-            <button onClick={() => {
-            setNameStart('');
-            setNameEnd('');
-            setDescription('');
-            setQuote('');
-            setGenerated(false);
-            setImageUrl('');
-            handleLogout();
-          }} className="underline text-red-300 hover:text-red-100">Logout</button>
-          </div>
-        ) : (
-          <button
-            onClick={() => window.location.href = '/login?redirect=/character-generator'}
-            className="text-sm bg-yellow-500 hover:bg-yellow-400 text-white px-3 py-1 rounded"
-          >
-            🔐 Log in
-          </button>
-        )}
-      </div>
+      <h1 className="text-3xl font-bold">🧠 Brainrot Character Generator 🧠</h1>
 
-      <h1 className="text-3xl font-bold mt-2">🧠 Brainrot Character Generator 🧠</h1>
+      {!user && (
+        <div className="text-sm text-yellow-700 bg-yellow-100 px-3 py-2 rounded shadow">
+          ⚠️ You have 1 free image generation. Log in to unlock more!
+        </div>
+      )}
+
+      {user && (
+        <div className="bg-white text-gray-700 p-3 rounded shadow mb-4 w-full text-left">
+          <p><strong>Email:</strong> {user.email}</p>
+          <p><strong>Credits:</strong> {credits !== null ? credits : 'Loading...'}</p>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <button
@@ -136,6 +132,7 @@ export default function CharacterGeneratorPage() {
         >
           Generate First Part
         </button>
+
         <button
           onClick={generateNameEnd}
           className="bg-green-600 hover:bg-green-400 text-white px-4 py-2 rounded"
@@ -167,63 +164,50 @@ export default function CharacterGeneratorPage() {
 
       {generated && description && (
         <button
-        onClick={async () => {
-          const { data: { user: currentUser } } = await supabase.auth.getUser();
-        
-          if (!description && !quote) {
-            alert("❌ Cannot generate image: character description or quote is missing.");
-            return;
-          }
-        
-          if (!currentUser) {
-            const used = getAnonymousUsage();
-            if (used >= 1) {
-              alert("🛑 You’ve used your free image. Log in to get more credits.");
-              window.location.href = '/login?redirect=/character-generator';
+          onClick={async () => {
+            const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+            if (!description && !quote) {
+              alert("❌ Cannot generate image: character description or quote is missing.");
               return;
-            } else {
-              incrementAnonymousUsage();
             }
-          }
-        
-          if (currentUser) {
-            // 🔄 Always fetch latest credits from Supabase
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('credits')
-              .eq('id', currentUser.id)
-              .single();
-        
-            const latestCredits = profile?.credits ?? 0;
-        
-            if (latestCredits <= 0) {
+
+            if (!currentUser) {
+              const used = getAnonymousUsage();
+              if (used >= 1) {
+                alert("🛑 You’ve used your free image. Log in to get more credits.");
+                window.location.href = '/login?redirect=/character-generator';
+                return;
+              } else {
+                incrementAnonymousUsage();
+              }
+            }
+
+            if (currentUser && credits !== null && credits <= 0) {
               alert("❌ You're out of image credits.");
               return;
             }
-        
-            setCredits(latestCredits); // ensure local state stays synced
-          }
-        
-          setLoadingImage(true);
-        
-          const res = await fetch('/api/image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: description || quote }),
-          });
-        
-          const data = await res.json();
-          setImageUrl(data.imageUrl);
-          setLoadingImage(false);
-        
-          if (currentUser && credits !== null) {
-            await supabase
-              .from('profiles')
-              .update({ credits: credits - 1 })
-              .eq('id', currentUser.id);
-            setCredits(credits - 1);
-          }
-        }}        
+
+            setLoadingImage(true);
+
+            const res = await fetch('/api/image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: description || quote }),
+            });
+
+            const data = await res.json();
+            setImageUrl(data.imageUrl);
+            setLoadingImage(false);
+
+            if (currentUser && credits !== null) {
+              await supabase
+                .from('profiles')
+                .update({ credits: credits - 1 })
+                .eq('id', currentUser.id);
+              setCredits(credits - 1);
+            }
+          }}
           className="mt-2 bg-purple-600 text-white px-4 py-2 rounded"
         >
           {loadingImage ? 'Generating Image...' : '🖼 Generate Character Image'}
