@@ -103,7 +103,7 @@ export default function CharacterGeneratorPage() {
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
-      <h1 className="text-3xl font-bold">🧠 Brainrot Character Generator 🧠</h1>
+      <h1 className="text-3xl font-bold">🥀🧠 Brainrot Character Generator 🧠🥀</h1>
 
       <div className="w-full">
         {user ? (
@@ -118,9 +118,9 @@ export default function CharacterGeneratorPage() {
         ) : (
           <button
             onClick={() => (window.location.href = '/login?redirect=/character-generator')}
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-400 text-white px-4 py-2 rounded"
           >
-            Login to track credits
+            Login for free credits
           </button>
         )}
       </div>
@@ -202,7 +202,8 @@ export default function CharacterGeneratorPage() {
               setCredits(credits - 1);
             }
           }}
-          className="mt-2 bg-purple-600 text-white px-4 py-2 rounded"
+          disabled={loadingImage || !!imageUrl}
+          className="mt-2 bg-purple-600 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-purple-400"
         >
           {loadingImage ? 'Generating Image...' : '🖼 Generate Character Image'}
         </button>
