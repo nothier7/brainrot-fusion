@@ -102,9 +102,9 @@ export default function CharacterGeneratorPage() {
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
       {/* Top banner */}
-      <div className="w-full bg-gray-800 text-white p-3 rounded shadow flex justify-between items-center text-sm">
+      <div className="w-full bg-gray-800 text-white p-3 rounded shadow flex justify-between items-center  text-center text-sm">
         {user ? (
-          <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex flex-wrap gap-2  text-center items-center">
             <span>👤 {user.email}</span>
             <span>🪙 {credits ?? 0} Credits</span>
             <button onClick={() => {
