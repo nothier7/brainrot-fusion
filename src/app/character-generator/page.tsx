@@ -15,6 +15,8 @@ export default function CharacterGeneratorPage() {
   const [loadingImage, setLoadingImage] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -215,7 +217,7 @@ export default function CharacterGeneratorPage() {
       )}
 
       {imageUrl && (
-        <img src={imageUrl} alt="Generated character" className="mt-4 w-full max-w-md rounded shadow-lg" />
+        <img src={imageUrl} alt="Generated character" className="mt-4 w-full max-w-md rounded shadow-lg" onClick={() => setFullscreenImage(imageUrl)} />
       )}
 
 {user && (
@@ -266,6 +268,34 @@ export default function CharacterGeneratorPage() {
           🔁 Generate Another Character
         </button>
       )}
+
+{fullscreenImage && (
+  <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center">
+    <div className="absolute top-4 right-4">
+      <button
+        onClick={() => setFullscreenImage(null)}
+        className="text-white text-3xl font-bold"
+      >
+        ✕
+      </button>
+    </div>
+    <div className="flex flex-col items-center">
+      <img
+        src={fullscreenImage}
+        alt="Fullscreen character"
+        className="max-w-full max-h-[90vh] mb-4"
+      />
+      <a
+        href={fullscreenImage}
+        download="brainrot_character.png"
+        className="bg-white text-black px-4 py-2 rounded shadow"
+      >
+        ⬇️ Download Image
+      </a>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
