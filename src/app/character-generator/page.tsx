@@ -110,7 +110,7 @@ export default function CharacterGeneratorPage() {
 
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 flex flex-col gap-4 items-center text-center">
-      <h1 className="text-3xl font-bold">🥀🧠 Brainrot Character Generator 🧠🥀</h1>
+      <h1 className="text-2xl font-bold">🥀🧠 Brainrot Character Generator 🧠🥀</h1>
 
       <div className="w-full">
         {user ? (
